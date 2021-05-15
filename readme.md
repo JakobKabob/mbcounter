@@ -10,3 +10,6 @@ how this stuff works yet. A couple updates further down the line and its a prope
   - maybe a nice gui in ncurses, with a filling bar when approaching your own set limit, and colours. 
 
 I'm open to suggestions :)
+
+**status**
+psutil doesnt support arm based? 
