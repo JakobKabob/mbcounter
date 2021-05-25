@@ -8,8 +8,15 @@ how this stuff works yet. A couple updates further down the line and its a prope
   - limiting internet usage, deactivating the connection after it crosses a set limit
   - notifying the user through audiovisual media, for instance if the 90% of quota has been crossed. 
   - maybe a nice gui in ncurses, with a filling bar when approaching your own set limit, and colours. 
+  - show cumulative data usage & bandwidth usage per second
 
 I'm open to suggestions :)
 
-### Status 
-psutil doesnt support arm based? 
+### Tips
+psutil is required, use:
+```
+sudo pacman -S python-psutil
+```
+
+### Status
+Its only showing cumulative bandwidth usage. Used psutil for measuring, not sure about the accuracy. 
