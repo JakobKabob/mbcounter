@@ -18,5 +18,10 @@ psutil is required, use:
 sudo pacman -S python-psutil
 ```
 
+### Usage
+```
+gc -l [limit in mb's] -n [mb's for notification]
+
 ### Status
-Its only showing cumulative bandwidth usage. Used psutil for measuring, not sure about the accuracy. 
+It's working on manjaro arm, bandwidth per sec are bad estimations. 
+-n flag doesnt do anything. 
