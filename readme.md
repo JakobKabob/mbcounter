@@ -21,6 +21,7 @@ sudo pacman -S python-psutil
 ### Usage
 ```
 gc -l [limit in mb's] -n [mb's for notification]
+```
 
 ### Status
 It's working on manjaro arm, bandwidth per sec are bad estimations. 
