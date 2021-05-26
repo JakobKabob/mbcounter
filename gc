@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import time
+import datetime
 import psutil
 import getopt
 import sys
@@ -10,7 +11,7 @@ limit_at = None
 
 argv = sys.argv[1:]
 
-try: 
+try:
     opts, args = getopt.getopt(argv, "n:l:")
 except:
     print('error')
@@ -21,32 +22,94 @@ for opt, arg in opts:
     elif opt in ['-l']:
         limit_at = float(arg)
 
-class gc: 
-    def __init__(self, notify_at, limit_at): 
+
+class gc:
+    def __init__(self, notify_at, limit_at):
+        self.start_time = datetime.datetime.now()
+        self.net_stat = psutil.net_io_counters()
+        self.net_recv = self.net_stat.bytes_recv
+        self.net_sent = self.net_stat.bytes_sent
+        self.net_cum = self.net_sent + self.net_recv
+        self.last_cum = self.net_cum
+        self.last_recv = self.net_recv
+        self.last_sent = self.net_sent
+
         self.notify_at = notify_at
         self.limit_at = limit_at
-        self.flags = '' 
-        self.start_value = psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv
+
+        self.flags = ''
         self.mainloop()
 
     def mainloop(self):
+        def bytes_to_MBs(value):
+            return value/1000/1000
+        class denom_bytes:
+            def __init__(self, value):
+                if value < 1000:
+                    self.conv = str(round(value, 3))
+                    self.denom = ' B'
+                elif 1000000 > value >= 1000:
+                    self.conv = str(round(value/1000, 3))
+                    self.denom = ' KB'
+                elif 1000000000 > value >= 1000000:
+                    self.conv = str(round(value/1000/1000, 3))
+                    self.denom = ' MB'
+                elif 1000000000000 > value:
+                    self.conv = str(round(value/1000/1000/1000, 3))
+                    self.denom = ' GB'
+
+        print('\n\n\n\n\n\n')
         while True:
-            new_value = psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv
-            megabytes = self.bytes_to_MBs(new_value - self.start_value)
+            # TODO add usage rate approximation (to visually compare to nethogs)
+#            print ("MB: %0.3f %s" % (megabytes, self.flags), end='\r)
+            net_stat = psutil.net_io_counters()
+            net_recv = net_stat.bytes_recv - self.net_recv
+            net_sent = net_stat.bytes_sent - self.net_sent
+            net_cum = net_sent + net_recv
 
-            print ("MB: %0.3f %s" % (megabytes, self.flags), end='\r')
+            diff_net_cum = net_stat.bytes_recv + net_stat.bytes_sent - self.last_cum
+            self.last_cum = net_stat.bytes_recv + net_stat.bytes_sent
 
-            if self.notify_at is not None and megabytes >= notify_at:
+            diff_net_recv = net_stat.bytes_recv - self.last_recv
+            self.last_recv = net_stat.bytes_recv
+
+            diff_net_sent = net_stat.bytes_sent - self.last_sent
+            self.last_sent = net_stat.bytes_sent
+
+            user_info = '\x1B[7A{:<20}| {:<20}| {:<20}| {:<20}\n' \
+                   '{:-<86}\n' \
+                   '{:<20}| {:<20}| {:<20}| {:<20}\n' \
+                   '{:<20}| {:<20}| {:<20}| {:<20}\n' \
+                   '{:-<86}\n' \
+                   '{:<20}| {:<20}| {:<20}\n' \
+                   '{:<20}'
+
+            user_info = user_info.format('start: ' + datetime.datetime.strftime(self.start_time, '%H:%M:%S'),
+                'tx/rx', 'tx', 'rx',
+                '',
+                'total', denom_bytes(net_cum).conv + denom_bytes(net_cum).denom, 
+                        denom_bytes(net_sent).conv + denom_bytes(net_sent).denom, 
+                        denom_bytes(net_recv).conv + denom_bytes(net_recv).denom ,
+                'current', denom_bytes(diff_net_cum).conv + denom_bytes(diff_net_cum).denom + '/s', 
+                        denom_bytes(diff_net_sent).conv + denom_bytes(diff_net_sent).denom + '/s', 
+                        denom_bytes(diff_net_recv).conv + denom_bytes(diff_net_recv).denom + '/s', 
+                '',
+                'flags', 'limit:' + str(self.limit_at) + ' MB' if self.limit_at is not None else '', 'notify: ' +
+                    str(self.notify_at) + ' MB' if self.notify_at is not None else '',
+                self.flags)
+
+
+            print(user_info)
+
+            if self.notify_at is not None and bytes_to_MBs(net_cum) >= self.notify_at:
                     self.flags += "\tPASSED NOTIFICATION LIMIT"
-                    self.notify_at = None
-            if self.limit_at is not None and megabytes >= limit_at:
-                    os.system('echo "GC: I am not yet able to deactivate your internet connection"')
-                    self.flags += "\tDISCONNECTED FROM THE INTERNET" 
-                    self.limit_at = None
+                    self.notify_at=None
+            if self.limit_at is not None and bytes_to_MBs(net_cum) >= self.limit_at:
+                    self.flags += "\tDISCONNECTED FROM THE INTERNET"
+                    os.system('nmcli networking off')
+                    self.limit_at=None
 
-            time.sleep(1) 
+            time.sleep(1)
 
-    def bytes_to_MBs(self, value): 
-        return value/1000/1000
 
-a = gc(notify_at, limit_at)
+a=gc(notify_at, limit_at)
