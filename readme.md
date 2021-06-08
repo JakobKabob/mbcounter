@@ -9,7 +9,7 @@ how this stuff works yet. A couple updates further down the line and its a prope
   - [x] present user with cumulative data usage & bandwidth usage per second
   - [ ] notifying the user; through audiovisual channels at a preset value (-n). 
   - [ ] gui in ncurses; indicative colours and a progress bar. 
-  - [ ] a reset function, at -r <minutes> the quotum stays the same but the counter drops to 0 mb's 
+  - [ ] a reset function, at -r [minutes] the quotum stays the same but the counter drops to 0 mb's 
 
 ### Tips
 psutil is required, when using manjaro use:
